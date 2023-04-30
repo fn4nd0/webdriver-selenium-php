@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HerokuappData;
 use Illuminate\Http\Request;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -12,7 +13,7 @@ class WebDriverController extends Controller
 {
     public function manageDriver()
     {
-        // Configurações do driver
+        // Driver Settings
         $options = new ChromeOptions();
         $options->addArguments(['--disable-gpu']);
         // $options->setBinary(__DIR__ . '/bin/chromedriver.exe');
@@ -21,16 +22,16 @@ class WebDriverController extends Controller
         $capabilities = DesiredCapabilities::chrome();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
 
-        // Criação do driver
+        // Driver creation
         $driver = RemoteWebDriver::create(
             'http://localhost:4444/wd/hub',
             $capabilities
         );
 
-        // Navega para a página do Google
+        // Navigate to a URL
         $driver->get('https://testpages.herokuapp.com/styled/tag/table.html');
 
-        // Captura todas as informações da tabela
+        // Capture all the data from the table
         $table = $driver->findElement(WebDriverBy::id('mytable'));
         $rows = $table->findElements(WebDriverBy::tagName('tr'));
         $data = [];
@@ -44,15 +45,15 @@ class WebDriverController extends Controller
         }
 
         $table_data = [];
-        // Imprime as informações da tabela
-        // echo "<pre>";print_r($data);
-        echo "<pre>";
+
         foreach($data as $r)
             array_push($table_data, array('name' => $r[0], 'data' => $r[1]));
 
-        print_r($table_data);
+        // Insert the data into the database
+        HerokuappData::insert($table_data);
 
-        // Fecha o navegador
+
+        // Close the browser
         $driver->quit();
     }
 }
