@@ -16,18 +16,22 @@ class WebDriverController extends Controller
     private $chromeDriverPath;
     private $webDriverUrl;
     private $uploadFilePath;
+    private $downloadPath;
 
     public function __construct()
     {
         $this->chromeDriverPath = env('CHROME_DRIVER_PATH', 'C:\Program Files\Google\Chrome\Application\chrome.exe');
         $this->webDriverUrl = env('WEB_DRIVER_URL', 'http://localhost:4444/wd/hub');
         $this->uploadFilePath = env('UPLOAD_FILE_PATH', '');
+        $this->downloadPath = env('DOWNLOAD_PATH', '');
     }
 
     public function manageDriver()
     {
         $this->getDataFromSite();
         $this->fillForm();
+        $this->downloadAndRenameFile('textfile.txt', 'Teste TKS.txt');
+        // $this->uploadFile('Teste TKS.txt');
     }
 
     private function createDriver()
@@ -152,5 +156,85 @@ class WebDriverController extends Controller
         }
     }
 
+    public function downloadAndRenameFile($filename, $newfilename)
+    {
+        try {
+            // Get the driver
+            $driver = $this->createDriver();
+
+            // Navigate to the download URL
+            $driver->get('https://testpages.herokuapp.com/styled/download/download.html');
+
+            // Click the "Direct Link Download" button
+            $driver->findElement(WebDriverBy::id('direct-download'))->click();
+
+            // Define the source and destination file paths
+            $sourceFilePath = $this->downloadPath . DIRECTORY_SEPARATOR . $filename;
+            $destinationFilePath = $this->downloadPath . DIRECTORY_SEPARATOR . $newfilename;
+            // $sourceFilePath = $this->downloadPath . DIRECTORY_SEPARATOR . 'textfile.txt';
+            // $destinationFilePath = $this->downloadPath . DIRECTORY_SEPARATOR . 'Teste TKS.txt';
+
+            // Wait for the download to complete
+            $timeout = 60; // Maximum time to wait in seconds
+            $timeElapsed = 0;
+            $interval = 2; // Time interval to check in seconds
+
+            while (!file_exists($sourceFilePath) && $timeElapsed < $timeout) {
+                sleep($interval);
+                $timeElapsed += $interval;
+            }
+
+            // Check if the file exists
+            if (file_exists($sourceFilePath)) {
+                // Rename the downloaded file
+                rename($sourceFilePath, $destinationFilePath);
+            } else {
+                throw new \Exception('Downloaded file not found.');
+            }
+
+            // Close the browser
+            $driver->quit();
+
+            $this->uploadFile($newfilename);
+        } catch (\Exception $e) {
+            Log::error("[WebDriverController][downloadAndRenameFile()][error: " . $e->getMessage() . "]");
+        }
+    }
+
+    public function uploadFile($filename)
+    {
+        try {
+            // Get the driver
+            $driver = $this->createDriver();
+
+            // Navigate to the file upload URL
+            $driver->get('https://testpages.herokuapp.com/styled/file-upload-test.html');
+
+            // Define the file path
+            $filePath = $this->downloadPath . DIRECTORY_SEPARATOR . $filename;
+
+            // Check if the file exists
+            if (!file_exists($filePath)) {
+                throw new \Exception('File not found.');
+            }
+
+            // Upload the file
+            $driver->findElement(WebDriverBy::id('fileinput'))->sendKeys($filePath);
+
+            // Select the "A General File" radio button
+            $driver->findElement(WebDriverBy::id('itsafile'))->click();
+
+            // Submit the form
+            $driver->findElement(WebDriverBy::cssSelector('input[type="submit"][name="upload"]'))->click();
+
+            // Sleep for a few seconds to visualize the result
+            sleep(10);
+
+            // Close the browser
+            $driver->quit();
+        } catch (\Exception $e) {
+            Log::error("[WebDriverController][uploadFile()][error: " . $e->getMessage() . "]");
+        }
+    }
 
 }
