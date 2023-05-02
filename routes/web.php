@@ -18,3 +18,4 @@ Route::get('/', function () {
 });
 
 Route::get('/robot', [App\Http\Controllers\WebDriverController::class, 'manageDriver']);
+Route::get('/pdf', [App\Http\Controllers\PdfController::class, 'convertPdfToCsv']);
