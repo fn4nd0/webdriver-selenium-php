@@ -29,6 +29,9 @@ class PdfController extends Controller
                 if ($pageNumber == 0) {
                     $firstPageResult = $this->dataFromFirstPage($text);
                 } else {
+
+                    // if ($pageNumber == 8) {
+
                     // A página é uma guia quando tiver esse subtext
                     if (strpos($text, 'DADOS DA GUIA') !== false) {
 
@@ -45,7 +48,7 @@ class PdfController extends Controller
 
                             // Se for o mesmo beneficiário, só, adicionar os valores ao anterior
                             if ($lastValue['head']['16 - Nome do Beneficiário'] == $guia['head']['16 - Nome do Beneficiário']) {
-                                $lastValue['head'] = $guia['head'];
+                                $guiasResults[$lastKey]['head'] = $guia['head'];
                                 foreach ($guia['medical_procedures'] as $procedure) {
                                     $guiasResults[$lastKey]['medical_procedures'][] = $procedure;
                                 }
@@ -57,6 +60,7 @@ class PdfController extends Controller
                             $guiasResults[] = $guia;
                         }
                     }
+                    // }
                 }
             }
 
@@ -248,18 +252,14 @@ class PdfController extends Controller
             $str = substr($text, $position);
             $lines = explode("\n", $str);
 
-
-
-            // Sempre que houver mais de 9 linhas, significa que existem múltiplos procedimentos
-            if (count($lines) > 9) {
+            // Sempre que houver mais de 10 linhas, significa que existem múltiplos procedimentos, de acordo com o padrão observado a partir do arquivo fornecido para o exercicio
+            if (count($lines) > 10) {
                 $procedimentos = $this->getMedicalProceduresForMultipleProcedures($text, $lines);
-                // dd($procedimentos);
             }  else {
                 $medical_procedures = $this->getMedicalProceduresForSingleProcedure($text, $lines);
 
                 // Preciso retornar como array para seguir mesmo padrão de quando existem multiplos procedimentos
                 $procedimentos[0] = $medical_procedures;
-                // dd($procedimentos);
             }
 
 
@@ -537,7 +537,7 @@ class PdfController extends Controller
 
         $medical_procedures = [];
 
-        $dados = $lines[0];
+        $dados = $lines[0] . " " . $lines[1];
 
         $pattern = '/Código da Glosa da Guia(\d{2}\/\d{2}\/\d{4})/';
 
@@ -554,17 +554,17 @@ class PdfController extends Controller
 
         $medical_procedures['tabela'] = $tabela;
 
-        $codigo_do_procedimento = substr($dados, 0, 2);
+        $codigo_do_procedimento = substr($dados, 0, 8);
         $dados = substr($dados, 8);
 
-        $medical_procedures['codigo do procedimento'] = $tabela;
+        $medical_procedures['codigo do procedimento'] = $codigo_do_procedimento;
 
         $pattern = '/^(.*?)(\d+,\d+)/';
         preg_match($pattern, $dados, $matches);
         $medical_procedures['descricao'] = $matches[1];
 
-        preg_match('/^[^\d]*\K\d[^ ]*/', $dados, $matches);
-        $dados = substr($dados, strpos($dados, $matches[0]));
+        preg_match('/\d+,\d+.*$/', $dados, $matches);
+        $dados = $matches[0];
 
         // Não tem nenhum padrão de preenchimento para o campo "Grau de Participação"
         $medical_procedures['grau participacao'] = '';
@@ -580,13 +580,5 @@ class PdfController extends Controller
         $medical_procedures['Código da Glosa do Procedimento'] = last($lines);
 
         return $medical_procedures;
-
-        // echo "<pre>";print_r($valores);echo "</pre>";
-
-        // echo "<pre>";print_r($dados);echo"</pre>";
-        // echo "<pre>";print_r($medical_procedures);die;
-
-        // dd("parar");
-
     }
 }
