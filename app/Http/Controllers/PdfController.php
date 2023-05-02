@@ -8,12 +8,8 @@ use Smalot\PdfParser\Parser;
 
 class PdfController extends Controller
 {
-
-    private $line = '';
-
     public function convertPdfToCsv()
     {
-
         try {
             $pdfFilePath = env('DOWNLOAD_PATH') . DIRECTORY_SEPARATOR . 'Leitura PDF.pdf';
             $parser = new Parser();
@@ -29,8 +25,6 @@ class PdfController extends Controller
                 if ($pageNumber == 0) {
                     $firstPageResult = $this->dataFromFirstPage($text);
                 } else {
-
-                    // if ($pageNumber == 8) {
 
                     // A página é uma guia quando tiver esse subtext
                     if (strpos($text, 'DADOS DA GUIA') !== false) {
@@ -60,12 +54,11 @@ class PdfController extends Controller
                             $guiasResults[] = $guia;
                         }
                     }
-                    // }
                 }
             }
 
             // Abre o arquivo para escrita
-            $file = fopen('dados.csv', 'w');
+            $file = fopen('demonstrativo_conta.csv', 'w');
 
             // Cabeçalho do arquivo
             $first_page = array_keys($guiasResults[0]['first_page']);
@@ -83,10 +76,10 @@ class PdfController extends Controller
                 // Combina o head com cada medical_procedures
                 foreach ($item['medical_procedures'] as $procedure) {
                     $procedureLine = [
-                        trim($procedure['data_realizacao'] ?? ''),
+                        trim($procedure['Data realizacao'] ?? ''),
                         trim($procedure['tabela'] ?? ''),
                         trim($procedure['codigo do procedimento'] ?? ''),
-                        trim($procedure['descricao'] ?? ''),
+                        trim($procedure['Descricao'] ?? ''),
                         trim($procedure['grau participacao'] ?? ''),
                         trim($procedure['Valor informado'] ?? ''),
                         trim($procedure['Quant. Executada'] ?? ''),
@@ -99,21 +92,15 @@ class PdfController extends Controller
                     $line = array_merge(array_values($item['first_page']), array_values($item['head']));
                     $line = array_merge($line, array_values($procedureLine));
 
-                    $this->line = $line;
                     fputcsv($file, $line);
                 }
             }
 
             // Fecha o arquivo
             fclose($file);
-
-
         } catch (\Exception $e) {
             echo "<pre>";print_r($e->getMessage());echo"</pre>";
-            echo $e->getMessage();
         }
-
-
     }
 
     public function dataFromFirstPage($text)
@@ -177,102 +164,95 @@ class PdfController extends Controller
 
     public function dataFromGuia($text)
     {
-        // try {
-            $pattern13 = '/DADOS DA GUIA(\d+)\s+13 - Número da Guia no Prestador/';
-            $pattern14a = '/(?<=Número da Guia no Prestador)(\d+)/';
-            $pattern14b = '/13 - Número da Guia no Prestador\d+\s+(- \d+)/';
-            $pattern15 = '/14 - Número da Guia Atribuido pela Operadora(\d+)\s+15 - Senha/';
-            $pattern16 = '/15 - Senha([\s\S]+?)16 - Nome do Beneficiário/';
-            $pattern17 = '/16 - Nome do Beneficiário([\s\S]+?)17 - Número da Carteira/';
-            $pattern18 = '/17 - Número da Carteira([\s\S]+?)18 - Data Início do Faturamento/';
-            $pattern19 = '/20 - Data Fim do Faturamento([\s\S]+?)19 - Hora Início do Faturamento/';
-            $pattern20 = '/18 - Data Início do Faturamento([\s\S]+?) 20 - Data Fim do Faturamento/';
-            $pattern22 = '/TOTAL DA GUIA\s*\r?\n\s*([\d.,]+.*)/s';
+        $pattern13 = '/DADOS DA GUIA(\d+)\s+13 - Número da Guia no Prestador/';
+        $pattern14a = '/(?<=Número da Guia no Prestador)(\d+)/';
+        $pattern14b = '/13 - Número da Guia no Prestador\d+\s+(- \d+)/';
+        $pattern15 = '/14 - Número da Guia Atribuido pela Operadora(\d+)\s+15 - Senha/';
+        $pattern16 = '/15 - Senha([\s\S]+?)16 - Nome do Beneficiário/';
+        $pattern17 = '/16 - Nome do Beneficiário([\s\S]+?)17 - Número da Carteira/';
+        $pattern18 = '/17 - Número da Carteira([\s\S]+?)18 - Data Início do Faturamento/';
+        $pattern19 = '/20 - Data Fim do Faturamento([\s\S]+?)19 - Hora Início do Faturamento/';
+        $pattern20 = '/18 - Data Início do Faturamento([\s\S]+?) 20 - Data Fim do Faturamento/';
+        $pattern22 = '/TOTAL DA GUIA\s*\r?\n\s*([\d.,]+.*)/s';
 
-            preg_match($pattern13, $text, $matches13);
-            preg_match($pattern14a, $text, $matches14a);
-            preg_match($pattern14b, $text, $matches14b);
-            preg_match($pattern15, $text, $matches15);
-            preg_match($pattern16, $text, $matches16);
-            preg_match($pattern17, $text, $matches17);
-            preg_match($pattern18, $text, $matches18);
-            preg_match($pattern19, $text, $matches19);
-            preg_match($pattern20, $text, $matches20);
-            preg_match($pattern22, $text, $matches22a);
+        preg_match($pattern13, $text, $matches13);
+        preg_match($pattern14a, $text, $matches14a);
+        preg_match($pattern14b, $text, $matches14b);
+        preg_match($pattern15, $text, $matches15);
+        preg_match($pattern16, $text, $matches16);
+        preg_match($pattern17, $text, $matches17);
+        preg_match($pattern18, $text, $matches18);
+        preg_match($pattern19, $text, $matches19);
+        preg_match($pattern20, $text, $matches20);
+        preg_match($pattern22, $text, $matches22a);
 
-            // 14 - Número da Guia Atribuido pela Operadora
-            $numero_guia_atribuido_operadora = (isset($matches14a) && isset($matches14b)) ? $matches14a[1] . $matches14b[1] : '';
+        // 14 - Número da Guia Atribuido pela Operadora
+        $numero_guia_atribuido_operadora = (isset($matches14a) && isset($matches14b)) ? $matches14a[1] . $matches14b[1] : '';
 
-            //22 - Código da Glosa da Guia
-            $total_str = isset($matches22a[1]) ? $matches22a[1] : '';
-            $total_lines = explode("\n", $total_str);
-            $first_line = $total_lines[0];
-            preg_match('/(?<=,)\d{2}(.*)/', $first_line, $matches22b);
+        //22 - Código da Glosa da Guia
+        $total_str = isset($matches22a[1]) ? $matches22a[1] : '';
+        $total_lines = explode("\n", $total_str);
+        $first_line = $total_lines[0];
+        preg_match('/(?<=,)\d{2}(.*)/', $first_line, $matches22b);
 
-            // 35, 36, 37
-            $needle = 'Código da Glosa34 - Valor Informado da Guia (R$)';
-            $pos = strpos($text, $needle);
-            $string_with_values = '';
-            if ($pos !== false) {
-                $string_with_values = substr($text, $pos + strlen($needle));
+        // 35, 36, 37
+        $needle = 'Código da Glosa34 - Valor Informado da Guia (R$)';
+        $pos = strpos($text, $needle);
+        $string_with_values = '';
+        if ($pos !== false) {
+            $string_with_values = substr($text, $pos + strlen($needle));
 
-            }
+        }
 
-            // Separar os valores do pé da pagina em um array
-            $values = explode(" ", $string_with_values);
+        // Separar os valores do pé da pagina em um array
+        $values = explode(" ", $string_with_values);
 
-            $result_head = [
-                '13 - Número da Guia no Prestador' => isset($matches13[1]) ? $matches13[1] : '',
-                '14 - Número da Guia Atribuido pela Operadora' => $numero_guia_atribuido_operadora,
-                '15 - Senha' => isset($matches15[1]) ? $matches15[1] : '',
-                '16 - Nome do Beneficiário' => isset($matches16[1]) ? $matches16[1] : '',
-                '17 - Número da Carteira' => isset($matches17[1]) ? $matches17[1] : '',
-                '18 - Data Início do Faturamento' => isset($matches18[1]) ? $matches18[1] : '',
-                '19 - Hora Início do Faturamento' => isset($matches19[1]) ? $matches19[1] : '',
-                '20 - Data Fim do Faturamento' => isset($matches20[1]) ? $matches20[1] : '',
-                '22 - Código da Glosa da Guia' => isset($matches22b[1]) ? $matches22b[1] : '',
-                '34 - Valor Informado da Guia' => isset($values[1]) ? $values[1] : '',
-                '35 - Valor Processado da Guia' => isset($values[1]) ? $values[1] : '',
-                '36 - Valor Liberado da Guia' => isset($values[2]) ? $values[2] : '',
-                '37 - Valor Glosa da Guia' => isset($values[3]) ? $values[3] : '',
-            ];
+        $result_head = [
+            '13 - Número da Guia no Prestador' => isset($matches13[1]) ? $matches13[1] : '',
+            '14 - Número da Guia Atribuido pela Operadora' => $numero_guia_atribuido_operadora,
+            '15 - Senha' => isset($matches15[1]) ? $matches15[1] : '',
+            '16 - Nome do Beneficiário' => isset($matches16[1]) ? $matches16[1] : '',
+            '17 - Número da Carteira' => isset($matches17[1]) ? $matches17[1] : '',
+            '18 - Data Início do Faturamento' => isset($matches18[1]) ? $matches18[1] : '',
+            '19 - Hora Início do Faturamento' => isset($matches19[1]) ? $matches19[1] : '',
+            '20 - Data Fim do Faturamento' => isset($matches20[1]) ? $matches20[1] : '',
+            '22 - Código da Glosa da Guia' => isset($matches22b[1]) ? $matches22b[1] : '',
+            '34 - Valor Informado da Guia' => isset($values[1]) ? $values[1] : '',
+            '35 - Valor Processado da Guia' => isset($values[1]) ? $values[1] : '',
+            '36 - Valor Liberado da Guia' => isset($values[2]) ? $values[2] : '',
+            '37 - Valor Glosa da Guia' => isset($values[3]) ? $values[3] : '',
+        ];
 
-            // Definir se existem múltiplos procedimentos ou apenas um. Cada um segue uma tratativa para extração de dados
+        // Definir se existem múltiplos procedimentos ou apenas um. Cada um segue uma tratativa para extração de dados
 
-            // encontrar a posição da frase "22 - Código da Glosa da Guia"
-            $position = strpos($text, '22 - Código da Glosa da Guia');
+        // encontrar a posição da frase "22 - Código da Glosa da Guia"
+        $position = strpos($text, '22 - Código da Glosa da Guia');
 
-            // extrair a data que vem depois da frase
-            if (preg_match('/\d{2}\/\d{2}\/\d{4}/', $text, $matches, 0, $position)) {
-                $data = $matches[0];
-            } else {
-                $data = null;
-            }
+        // extrair a data que vem depois da frase
+        if (preg_match('/\d{2}\/\d{2}\/\d{4}/', $text, $matches, 0, $position)) {
+            $data = $matches[0];
+        } else {
+            $data = null;
+        }
 
-            $str = substr($text, $position);
-            $lines = explode("\n", $str);
+        $str = substr($text, $position);
+        $lines = explode("\n", $str);
 
-            // Sempre que houver mais de 10 linhas, significa que existem múltiplos procedimentos, de acordo com o padrão observado a partir do arquivo fornecido para o exercicio
-            if (count($lines) > 10) {
-                $procedimentos = $this->getMedicalProceduresForMultipleProcedures($text, $lines);
-            }  else {
-                $medical_procedures = $this->getMedicalProceduresForSingleProcedure($text, $lines);
+        // Sempre que houver mais de 10 linhas, significa que existem múltiplos procedimentos, de acordo com o padrão observado a partir do arquivo fornecido para o exercicio
+        if (count($lines) > 10) {
+            $procedimentos = $this->getMedicalProceduresForMultipleProcedures($text, $lines);
+        }  else {
+            $medical_procedures = $this->getMedicalProceduresForSingleProcedure($text, $lines);
 
-                // Preciso retornar como array para seguir mesmo padrão de quando existem multiplos procedimentos
-                $procedimentos[0] = $medical_procedures;
-            }
-
+            // Preciso retornar como array para seguir mesmo padrão de quando existem multiplos procedimentos
+            $procedimentos[0] = $medical_procedures;
+        }
 
 
-            $result = ['head' => $result_head, 'medical_procedures' => $procedimentos];
-            // dd($result);
 
-            return $result;
+        $result = ['head' => $result_head, 'medical_procedures' => $procedimentos];
 
-        // } catch (\Throwable $e) {
-        //     Log::error("lines: " . json_encode($this->lines));
-        //     $e->getMessage();
-        // }
+        return $result;
 
     }
 
@@ -291,7 +271,7 @@ class PdfController extends Controller
                     $data_realizacao = $matche_data[0];
 
                     if ($tabela === null) {
-                        $medical_procedures[] = ['data_realizacao' => $data_realizacao];
+                        $medical_procedures[] = ['Data realizacao' => $data_realizacao];
                     }
                 } else {
                     $first_tabela_row = $lineNumber - 1;
@@ -380,9 +360,8 @@ class PdfController extends Controller
                 }
             }
 
-
             foreach ($medical_procedures as $key => $value) {
-                $medical_procedures[$key]['Descrição'] = $descricao_procedimento;
+                $medical_procedures[$key]['Descricao'] = $descricao_procedimento;
             }
 
             // Grau Participação
@@ -400,13 +379,13 @@ class PdfController extends Controller
                     // Check if there are just decimal values
                     if (preg_match('/^\s*\d+,\d*\s*$/', $line)) {
 
-                        $medical_procedures[$i]['valor informado'] = $line;
+                        $medical_procedures[$i]['Valor informado'] = $line;
                         $last_valor_informado_row = $valor_informado_first_row + $i;
                         continue;
                     } else {
                         // Found a non decimal value
                         preg_match('/\d+,\d+/', $line, $match);
-                        $medical_procedures[$i]['valor informado'] = $match[0];
+                        $medical_procedures[$i]['Valor informado'] = $match[0];
 
                         $last_valor_informado_row = $valor_informado_first_row + $i;
                         break;
@@ -533,8 +512,6 @@ class PdfController extends Controller
 
     private function getMedicalProceduresForSingleProcedure($text, $lines)
     {
-        // echo "<pre>";print_r($lines);die;
-
         $medical_procedures = [];
 
         $dados = $lines[0] . " " . $lines[1];
@@ -546,7 +523,7 @@ class PdfController extends Controller
             $dados = substr($dados, strpos($dados, $data_realizacao) + strlen($data_realizacao));
         }
 
-        $medical_procedures['data_realizacao'] = $data_realizacao;
+        $medical_procedures['Data realizacao'] = $data_realizacao;
 
 
         $tabela = substr($dados, 0, 2);
@@ -561,7 +538,7 @@ class PdfController extends Controller
 
         $pattern = '/^(.*?)(\d+,\d+)/';
         preg_match($pattern, $dados, $matches);
-        $medical_procedures['descricao'] = $matches[1];
+        $medical_procedures['Descricao'] = $matches[1];
 
         preg_match('/\d+,\d+.*$/', $dados, $matches);
         $dados = $matches[0];
