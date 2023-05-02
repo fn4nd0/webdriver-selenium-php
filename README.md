@@ -28,8 +28,14 @@ These are a few things worked with in this project:
 
 7) Run `php artisan db:setup`. This command will create the database (if not exists), tables and initial data
 
-8) Open one terminal and run `php artisan serve` 
+8) Configure your .env file. I created a .env.example. Check particularly for these for env variables: 
+	CHROME_DRIVER_PATH=PATH_TO_THE_CHROME_DRIVER_PATH
+	WEB_DRIVER_URL
+	UPLOAD_FILE_PATH=PATH_TO_A_LOCAL_FILE_FOR_UPLOAD_EXERCISE_WITH_SELENIUM
+	DOWNLOAD_PATH=PATH_WHERE_FILES_ARE_DOWNLOAD_IN_YOUR_BROWSWER
 
-9) Open another terminal, navite to the paste where the Selenium Standalone Driver is located and `java -jar selenium-server-XXXX.jar standalone`
+9) Open one terminal and run `php artisan serve` 
 
-10) Open the browser and go to your localhost artisan serve port to enjoy it! 
+10) Open another terminal, navite to the paste where the Selenium Standalone Driver is located and `java -jar selenium-server-XXXX.jar standalone`
+
+11) Open the browser and go to your localhost artisan serve port to enjoy it! 
