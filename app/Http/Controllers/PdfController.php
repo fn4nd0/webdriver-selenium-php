@@ -58,7 +58,7 @@ class PdfController extends Controller
             }
 
             // Abre o arquivo para escrita
-            $file = fopen('demonstrativo_conta.csv', 'w');
+            $file = fopen(public_path('demonstrativo_conta.csv'), 'w');
 
             // Cabeçalho do arquivo
             $first_page = array_keys($guiasResults[0]['first_page']);
@@ -98,6 +98,12 @@ class PdfController extends Controller
 
             // Fecha o arquivo
             fclose($file);
+
+            // Retorna o arquivo CSV como uma resposta de download
+            return response()->download(public_path('demonstrativo_conta.csv'), 'demonstrativo_conta.csv', [
+                'Content-Type' => 'text/csv',
+            ]);
+
         } catch (\Exception $e) {
             echo "<pre>";print_r($e->getMessage());echo"</pre>";
         }

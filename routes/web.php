@@ -1,21 +1,20 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PdfController;
+use App\Http\Controllers\WebDriverController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+Route::get('/login', [App\Http\Controllers\Auth\AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/', function () {
-    return view('welcome');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/automacao', [WebDriverController::class, 'manageDriver'])->name('manageDriver');
+    Route::get('/pdf', [PdfController::class, 'convertPdfToCsv'])->name('convertPdfToCsv');
 });
 
-Route::get('/robot', [App\Http\Controllers\WebDriverController::class, 'manageDriver']);
-Route::get('/pdf', [App\Http\Controllers\PdfController::class, 'convertPdfToCsv']);
+

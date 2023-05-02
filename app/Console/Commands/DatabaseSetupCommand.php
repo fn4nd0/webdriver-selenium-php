@@ -46,6 +46,7 @@ class DatabaseSetupCommand extends Command
 
         // Execute the migrations
         Artisan::call('migrate', ['--force' => true]);
+        Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\UserSeeder']);
 
         $this->info('Database and migrations created sucessfully.');
     }
